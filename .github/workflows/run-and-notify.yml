@@ -1,0 +1,123 @@
+name: Run and Notify
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        description: 'Command to run inside the caller repository checkout.'
+        required: true
+        type: string
+      notify-on:
+        description: 'When to notify: always | success | failure | never.'
+        required: false
+        type: string
+        default: always
+      channel:
+        description: 'Notification channel: auto | feishu | dingtalk | slack | wecom | generic.'
+        required: false
+        type: string
+        default: auto
+      title:
+        description: 'Title used in the notification; defaults to the caller repository name.'
+        required: false
+        type: string
+        default: ''
+      working-directory:
+        description: 'Directory (relative to the repository root) where the command runs.'
+        required: false
+        type: string
+        default: '.'
+      python-version:
+        description: 'Python version to install.'
+        required: false
+        type: string
+        default: '3.12'
+      timeout-minutes:
+        description: 'Job timeout in minutes.'
+        required: false
+        type: number
+        default: 30
+      env-json:
+        description: 'Extra environment variables as a JSON object, e.g. the caller can pass toJSON(vars).'
+        required: false
+        type: string
+        default: '{}'
+    secrets:
+      webhook-url:
+        description: 'Webhook URL used to send the notification.'
+        required: false
+      sign-secret:
+        description: 'Signing secret for the webhook (Feishu or DingTalk).'
+        required: false
+      env-secrets:
+        description: 'Extra secrets as a JSON object, injected as environment variables.'
+        required: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v7
+
+      - name: Checkout github-autorun
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .autorun
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install dependencies
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
+          else
+            echo "No requirements.txt found, skipping dependency install."
+          fi
+
+      - name: Load environment
+        shell: bash
+        env:
+          VAR_JSON: ${{ inputs.env-json }}
+          SECRET_JSON: ${{ secrets.env-secrets }}
+        run: python "$GITHUB_WORKSPACE/.autorun/scripts/load_env.py"
+
+      - name: Run command
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          set -o pipefail
+          ${{ inputs.command }} 2>&1 | tee "$RUNNER_TEMP/autorun-output.log"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autorun-report
+          path: ${{ inputs.working-directory }}/report.md
+          if-no-files-found: ignore
+
+      - name: Notify
+        if: always() && inputs.notify-on != 'never'
+        shell: bash
+        env:
+          AUTORUN_NOTIFY_ON: ${{ inputs.notify-on }}
+          AUTORUN_CHANNEL: ${{ inputs.channel }}
+          AUTORUN_TITLE: ${{ inputs.title }}
+          AUTORUN_JOB_STATUS: ${{ job.status }}
+          AUTORUN_LOG: ${{ runner.temp }}/autorun-output.log
+          WEBHOOK_URL: ${{ secrets.webhook-url }}
+          SIGN_SECRET: ${{ secrets.sign-secret }}
+        run: python "$GITHUB_WORKSPACE/.autorun/scripts/notify.py"

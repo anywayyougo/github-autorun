@@ -1,0 +1,14 @@
+name: Selftest
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  run:
+    uses: ./.github/workflows/run-and-notify.yml
+    with:
+      command: 'echo "SELFTEST_VAR=${SELFTEST_VAR}"'
+      title: github-autorun selftest
+      env-json: '{"SELFTEST_VAR":"hello-from-env-json"}'

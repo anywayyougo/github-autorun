@@ -1,0 +1,22 @@
+name: daily job
+
+on:
+  schedule:
+    - cron: '35 6 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  run:
+    uses: anywayyougo/github-autorun/.github/workflows/run-and-notify.yml@v1
+    permissions:
+      contents: read
+    with:
+      command: python main.py
+      notify-on: always
+      title: Daily Job
+      working-directory: .
+      env-json: ${{ toJSON(vars) }}
+    secrets:
+      webhook-url: ${{ secrets.FEISHU_WEBHOOK_URL }}
+      sign-secret: ${{ secrets.FEISHU_SIGN_SECRET }}
+      env-secrets: '{"MY_API_KEY":"${{ secrets.MY_API_KEY }}"}'
