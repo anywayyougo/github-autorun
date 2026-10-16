@@ -9,6 +9,6 @@ jobs:
   run:
     uses: ./.github/workflows/run-and-notify.yml
     with:
-      command: 'echo "SELFTEST_VAR=${SELFTEST_VAR}"'
+      command: 'python -c "import yaml; print(''yaml-ok'', yaml.__version__)" && echo "SELFTEST_VAR=${SELFTEST_VAR}"'
       title: github-autorun selftest
       env-json: '{"SELFTEST_VAR":"hello-from-env-json"}'

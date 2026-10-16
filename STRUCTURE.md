@@ -14,6 +14,7 @@ github-autorun/
 │  └─ load_env.py          # 把 env-json / env-secrets 注入到运行环境
 ├─ examples/
 │  └─ caller.yml           # 调用方模板：复制到你的仓库、改两行即可
+├─ requirements.txt        # 自测用最小依赖清单（同时验证 uv 安装路径）
 ├─ README.md               # 使用说明：参数、密钥、渠道、注意事项
 ├─ STRUCTURE.md            # 本文件：结构、职责、流程
 ├─ RENAMING_THIS_REPO_BREAKS_ALL_CALLERS.md   # 警告：改仓库名会中断所有调用方
