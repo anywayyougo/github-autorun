@@ -12,7 +12,7 @@
         |
         v
    检出你的仓库 -> 检出 autorun 自身（锁定调用时的 SHA）
-        -> 安装 Python / requirements.txt
+        -> 安装 Python / requirements.txt（uv 安装 + 云端缓存加速）
         -> 注入 Variables 和 Secrets 到运行环境
         -> 执行你的命令（输出全程留档）
         -> 上传 report.md（若存在）
@@ -66,6 +66,7 @@
 
 - **个人账号不支持 `secrets: inherit`**：调用方必须用 `secrets:` 逐个传（见 examples）。
 - **`schedule` 只能写在调用方仓库**：可复用工作流里写 `schedule` 不会生效。
+- **依赖安装用 uv**：`requirements.txt` 存在时经 `astral-sh/setup-uv` 安装，包缓存持久化在 GitHub 云端（key 按依赖文件内容），首次冷装约半分钟、后续几秒；与本地电脑无关。
 - 私有仓库也可以调用本公开工作流，无需额外 Access 设置（公开仓库被调用免授权）。
 - `env-json: ${{ toJSON(vars) }}` 会把调用方仓库的全部 Variable 注入脚本环境；项目密钥请打包进 `env-secrets`。
 - 版本调用建议 `@v1`（浮动 tag，向后兼容更新）；需要绝对稳定可改成具体 commit SHA。

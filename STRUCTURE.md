@@ -47,7 +47,7 @@ github-autorun/
    ① checkout 调用方仓库（默认 workspace）
    ② checkout 本仓库自身到 .autorun/（repository=${{ job.workflow_repository }}, ref=${{ job.workflow_sha }}）
    ③ setup-python
-   ④ 有 requirements.txt 则 pip install
+   ④ 有 requirements.txt 则用 uv 安装（setup-uv，enable-cache 云端缓存）
    ⑤ load_env.py：env-json + env-secrets → $GITHUB_ENV
    ⑥ 执行 command（pipefail + tee 到固定日志文件）
    ⑦ 上传 working-directory/report.md 为 artifact（存在才传）

@@ -76,13 +76,18 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+          cache-dependency-glob: ${{ inputs.working-directory }}/requirements.txt
+
       - name: Install dependencies
         shell: bash
         working-directory: ${{ inputs.working-directory }}
         run: |
           if [ -f requirements.txt ]; then
-            python -m pip install --upgrade pip
-            python -m pip install -r requirements.txt
+            uv pip install --system -r requirements.txt
           else
             echo "No requirements.txt found, skipping dependency install."
           fi
